@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .invoice {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f4f4f4;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .header {
+            text-align: center;
+        }
+        .customer-info {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .invoice-details {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .amount {
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice">
+        <div class="header">
+            <h1>Invoice</h1>
+        </div>
+        <div class="customer-info">
+            <p><strong>Customer:</strong> {{ data.customer_name }}</p>
+        </div>
+        <div class="invoice-details">
+            <p><strong>Date:</strong> {{ data.invoice_date }}</p>
+            <p><strong>Amount:</strong> <span class="amount">${{ data.amount }}</span></p>
+        </div>
+    </div>
+</body>
+</html>
