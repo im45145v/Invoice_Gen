@@ -1,0 +1,5 @@
+streamlit
+jinja2
+os
+pdfkit
+requests
