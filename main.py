@@ -15,15 +15,14 @@ def generate_invoice(data):
     rendered_html = template.render(data=data)
     return rendered_html
 def generate_pdf(html_content):
-    pdfkit_options = {
-        "page-size": "Letter",
-        "encoding": "UTF-8",
-    }
-    pdf_content = pdfkit.from_string(html_content, False, options=pdfkit_options)
-    return pdf_content
-def upload_to_anonfiles(file_content):
+    response = requests.post("https://pdfconvert.onrender.com/generate_pdf", data={"html_content": html_content})
+    if response.status_code == 200:
+        return response.content  # Return the PDF content
+    else:
+        return None
+def upload_to_anonfiles(pdf_content):
     upload_url = "https://api.anonfiles.com/upload"
-    files = {"file": ("invoice.pdf", file_content)}
+    files = {"file": ("invoice.pdf", pdf_content)}
     response = requests.post(upload_url, files=files)
     if response.status_code == 200:
         data = response.json()
@@ -47,11 +46,11 @@ def main():
         st.subheader("Generated Invoice:")
         pdf_content = generate_pdf(rendered_invoice)
         if pdf_content:
+            st.success("PDF generated successfully!")
             # Save PDF locally
             pdf_filename = "invoice.pdf"
             with open(pdf_filename, "wb") as pdf_file:
                 pdf_file.write(pdf_content)
-            st.success("PDF generated and saved successfully!")
             # Upload PDF to AnonFiles
             short_url = upload_to_anonfiles(pdf_content)
             if short_url:
@@ -60,5 +59,7 @@ def main():
                 os.remove(pdf_filename)  # Remove the locally saved PDF
             else:
                 st.error("Failed to upload PDF.")
+        else:
+            st.error("PDF generation failed.")
 if __name__ == "__main__":
     main()
