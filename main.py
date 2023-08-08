@@ -14,17 +14,22 @@ def generate_invoice(data):
     # Render the template with the provided data
     rendered_html = template.render(data=data)
     return rendered_html
-def upload_to_anonfiles(file_path):
+def generate_pdf(html_content):
+    pdfkit_options = {
+        "page-size": "Letter",
+        "encoding": "UTF-8",
+    }
+    pdf_content = pdfkit.from_string(html_content, False, options=pdfkit_options)
+    return pdf_content
+def upload_to_anonfiles(file_content):
     upload_url = "https://api.anonfiles.com/upload"
-
-    with open(file_path, "rb") as file:
-        files = {"file": (file_path, file)}
-
-        response = requests.post(upload_url, files=files)
-        if response.status_code == 200:
-            data = response.json()
-            if data["status"]:
-                return data["data"]["file"]["url"]["short"]
+    files = {"file": ("invoice.pdf", file_content)}
+    response = requests.post(upload_url, files=files)
+    if response.status_code == 200:
+        data = response.json()
+        if data["status"]:
+            return data["data"]["file"]["url"]["short"]
+    return None
 def main():
     st.title("Invoice Generator")
     # User input for invoice data
@@ -40,21 +45,20 @@ def main():
     if st.button("Generate Invoice"):
         rendered_invoice = generate_invoice(data)
         st.subheader("Generated Invoice:")
-        # Save the rendered HTML to a file
-        output_html_path = "invoice.html"
-        with open(output_html_path, "w") as f:
-            f.write(rendered_invoice)
-        pdfkit.from_file('invoice.html', 'invoice.pdf')
-        if os.path.exists("invoice.html"):
-            os.remove("invoice.html")
-        st.success("Invoice HTML generated and saved.")
-        short_url = upload_to_anonfiles("invoice.pdf")
-        if short_url:
-            st.write("File uploaded successfully.")
-            st.write("Short URL:", short_url)
-            if os.path.exists("invoice.pdf"):
-                os.remove("invoice.pdf")
-        else:
-            print("Failed to upload file.")
+        pdf_content = generate_pdf(rendered_invoice)
+        if pdf_content:
+            # Save PDF locally
+            pdf_filename = "invoice.pdf"
+            with open(pdf_filename, "wb") as pdf_file:
+                pdf_file.write(pdf_content)
+            st.success("PDF generated and saved successfully!")
+            # Upload PDF to AnonFiles
+            short_url = upload_to_anonfiles(pdf_content)
+            if short_url:
+                st.write("PDF uploaded successfully.")
+                st.write("PDF Short URL:", short_url)
+                os.remove(pdf_filename)  # Remove the locally saved PDF
+            else:
+                st.error("Failed to upload PDF.")
 if __name__ == "__main__":
     main()
