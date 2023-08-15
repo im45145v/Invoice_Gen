@@ -1,8 +1,6 @@
 import streamlit as st
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-import os
-import pdfkit
-import requests
+import base64
 # Load Jinja environment with the template folder
 template_env = Environment(
     loader=FileSystemLoader("templates"),
@@ -14,21 +12,6 @@ def generate_invoice(data):
     # Render the template with the provided data
     rendered_html = template.render(data=data)
     return rendered_html
-def generate_pdf(html_content):
-    response = requests.post("https://pdfconvert.onrender.com/generate_pdf", data={"html_content": html_content})
-    if response.status_code == 200:
-        return response.content  # Return the PDF content
-    else:
-        return None
-def upload_to_anonfiles(pdf_content):
-    upload_url = "https://api.anonfiles.com/upload"
-    files = {"file": ("invoice.pdf", pdf_content)}
-    response = requests.post(upload_url, files=files)
-    if response.status_code == 200:
-        data = response.json()
-        if data["status"]:
-            return data["data"]["file"]["url"]["short"]
-    return None
 def main():
     st.title("Invoice Generator")
     # User input for invoice data
@@ -43,23 +26,11 @@ def main():
     # Generate and display the invoice HTML
     if st.button("Generate Invoice"):
         rendered_invoice = generate_invoice(data)
-        st.subheader("Generated Invoice:")
-        pdf_content = generate_pdf(rendered_invoice)
-        if pdf_content:
-            st.success("PDF generated successfully!")
-            # Save PDF locally
-            pdf_filename = "invoice.pdf"
-            with open(pdf_filename, "wb") as pdf_file:
-                pdf_file.write(pdf_content)
-            # Upload PDF to AnonFiles
-            short_url = upload_to_anonfiles(pdf_content)
-            if short_url:
-                st.write("PDF uploaded successfully.")
-                st.write("PDF Short URL:", short_url)
-                os.remove(pdf_filename)  # Remove the locally saved PDF
-            else:
-                st.error("Failed to upload PDF.")
-        else:
-            st.error("PDF generation failed.")
+        # Generate a unique URL for the HTML content
+        url = f"data:text/html;charset=UTF-8;base64,{base64.b64encode(rendered_invoice.encode()).decode()}"
+        # Display link for manual opening
+        st.markdown('### Generated Invoice')
+        st.markdown(f'Click [here](%s) to open Invoice.' % url, unsafe_allow_html=True)
+        st.markdown('Right click and open it')
 if __name__ == "__main__":
     main()
